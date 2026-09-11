@@ -5,12 +5,15 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import com.example.scrolljourney.data.mock.MockCalibrationRepository
+import com.example.scrolljourney.data.mock.MockGamificationRepository
+import com.example.scrolljourney.data.mock.MockScrollStatsRepository
+import com.example.scrolljourney.data.mock.MockTrackingController
+import com.example.scrolljourney.ui.navigation.ScrollJourneyNavigation
+import com.example.scrolljourney.ui.state.ScrollJourneyViewModel
 import com.example.scrolljourney.ui.theme.ScrollJourneyTheme
 
 class MainActivity : ComponentActivity() {
@@ -19,29 +22,24 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             ScrollJourneyTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
+                // TODO: Agent 4 to inject real repositories from integration layer
+                val viewModel = remember {
+                    ScrollJourneyViewModel(
+                        statsRepository = MockScrollStatsRepository(),
+                        trackingController = MockTrackingController(),
+                        gamificationRepository = MockGamificationRepository()
+                    )
+                }
+
+                Surface(modifier = Modifier.fillMaxSize()) {
+                    ScrollJourneyNavigation(
+                        viewModel = viewModel,
+                        onOpenAccessibilitySettings = {
+                            // TODO: Agent 4 to implement accessibility settings navigation
+                        }
                     )
                 }
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    ScrollJourneyTheme {
-        Greeting("Android")
     }
 }
