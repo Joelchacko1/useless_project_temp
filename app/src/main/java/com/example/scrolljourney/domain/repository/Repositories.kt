@@ -61,6 +61,17 @@ interface TrackingController {
      * Observe whether accessibility permission is granted.
      */
     fun isAccessibilityPermissionGranted(): Flow<Boolean>
+
+    /**
+     * Observe whether the "draw over other apps" permission is granted, needed to show
+     * achievement-unlock celebrations over whatever app the user is currently using.
+     */
+    fun isOverlayPermissionGranted(): Flow<Boolean>
+
+    /**
+     * Open the system settings screen where the user can grant the overlay permission.
+     */
+    fun openOverlaySettings()
 }
 
 /**

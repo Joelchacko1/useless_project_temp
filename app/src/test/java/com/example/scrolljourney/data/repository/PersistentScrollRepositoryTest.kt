@@ -4,10 +4,12 @@ import com.example.scrolljourney.data.persistence.ScrollDataStore
 import com.example.scrolljourney.domain.data.EstimationMethod
 import com.example.scrolljourney.domain.data.ProcessedScroll
 import com.example.scrolljourney.domain.data.ScrollDirection
+import com.example.scrolljourney.gamification.Achievement
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -202,5 +204,74 @@ class PersistentScrollRepositoryTest {
         val persisted = ScrollDataStore(missingFile).load()
         assertEquals(0, persisted.events.size)
         assertEquals(0L, persisted.gamificationState.totalXp)
+    }
+
+    @Test
+    fun testNewlyUnlockedAchievementEmitsOnceOnThresholdCrossing() = runBlocking {
+        val repo = newRepo()
+        val collected = mutableListOf<Achievement>()
+        val job = launch(Dispatchers.Unconfined) {
+            repo.newlyUnlockedAchievements.collect { collected.add(it) }
+        }
+
+        // Crosses the ACH_1KM (1000m) threshold.
+        repo.recordScroll(
+            ProcessedScroll(
+                id = "1",
+                timestampEpochMs = Instant.now().toEpochMilli(),
+                packageName = "com.android.chrome",
+                direction = ScrollDirection.UP,
+                distanceMeters = 1200.0,
+                confidence = 1.0f,
+                estimationMethod = EstimationMethod.ACTUAL_DELTA,
+            ),
+        )
+        assertEquals(1, collected.size)
+        assertEquals("ACH_1KM", collected[0].id)
+
+        // A further scroll that doesn't cross another threshold must not re-emit ACH_1KM.
+        repo.recordScroll(
+            ProcessedScroll(
+                id = "2",
+                timestampEpochMs = Instant.now().toEpochMilli(),
+                packageName = "com.android.chrome",
+                direction = ScrollDirection.UP,
+                distanceMeters = 100.0,
+                confidence = 1.0f,
+                estimationMethod = EstimationMethod.ACTUAL_DELTA,
+            ),
+        )
+        assertEquals(1, collected.size)
+
+        job.cancel()
+    }
+
+    @Test
+    fun testSingleScrollCrossingMultipleThresholdsEmitsEachOnce() = runBlocking {
+        val repo = newRepo()
+        val collected = mutableListOf<Achievement>()
+        val job = launch(Dispatchers.Unconfined) {
+            repo.newlyUnlockedAchievements.collect { collected.add(it) }
+        }
+
+        // One huge scroll crosses ACH_1KM, ACH_5KM, ACH_10KM and ACH_25KM all at once.
+        repo.recordScroll(
+            ProcessedScroll(
+                id = "1",
+                timestampEpochMs = Instant.now().toEpochMilli(),
+                packageName = "com.android.chrome",
+                direction = ScrollDirection.UP,
+                distanceMeters = 30000.0,
+                confidence = 1.0f,
+                estimationMethod = EstimationMethod.ACTUAL_DELTA,
+            ),
+        )
+
+        assertEquals(
+            setOf("ACH_1KM", "ACH_5KM", "ACH_10KM", "ACH_25KM"),
+            collected.map { it.id }.toSet(),
+        )
+
+        job.cancel()
     }
 }

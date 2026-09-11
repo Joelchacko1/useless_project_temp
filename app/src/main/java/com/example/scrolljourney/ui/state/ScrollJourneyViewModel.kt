@@ -110,12 +110,14 @@ class ScrollJourneyViewModel(
         combine(
             trackingController.isTrackingEnabled(),
             trackingController.isServiceConnected(),
-            trackingController.isAccessibilityPermissionGranted()
-        ) { isEnabled, isConnected, isPermissionGranted ->
+            trackingController.isAccessibilityPermissionGranted(),
+            trackingController.isOverlayPermissionGranted()
+        ) { isEnabled, isConnected, isPermissionGranted, isOverlayGranted ->
             TrackingUiState(
                 isTrackingEnabled = isEnabled,
                 serviceConnected = isConnected,
                 isAccessibilityPermissionGranted = isPermissionGranted,
+                isOverlayPermissionGranted = isOverlayGranted,
                 isLoading = false
             )
         }.onEach { newState ->
@@ -183,6 +185,10 @@ class ScrollJourneyViewModel(
 
     fun openAccessibilitySettings() {
         trackingController.openAccessibilitySettings()
+    }
+
+    fun openOverlaySettings() {
+        trackingController.openOverlaySettings()
     }
 
     fun selectStatsPeriod(period: StatsPeriod) {

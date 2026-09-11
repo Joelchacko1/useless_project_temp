@@ -26,6 +26,9 @@ class ScrollAccessibilityService : AccessibilityService() {
     private var calibrationProfileLoaded = false
     private var calibrationProfile: com.example.scrolljourney.domain.distance.CalibrationProfile? = null
 
+    private val overlayPresenter by lazy { AchievementOverlayPresenter(this) }
+    private var overlayScope: CoroutineScope? = null
+
     override fun onServiceConnected() {
         super.onServiceConnected()
         eventProcessor = ScrollEventProcessor(
@@ -36,6 +39,14 @@ class ScrollAccessibilityService : AccessibilityService() {
         }.asCoroutineDispatcher()
         processingDispatcher = dispatcher
         processingScope = CoroutineScope(SupervisorJob() + dispatcher)
+
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+        overlayScope = scope
+        scope.launch {
+            ScrollTrackingDependencies.achievementUnlockEvents(filesDir).collect { achievement ->
+                overlayPresenter.show(achievement)
+            }
+        }
 
         val dependencies = ScrollTrackingDependencies.snapshot()
         Log.d(
@@ -126,6 +137,9 @@ class ScrollAccessibilityService : AccessibilityService() {
         processingDispatcher?.close()
         processingScope = null
         processingDispatcher = null
+        overlayPresenter.dismissAll()
+        overlayScope?.cancel()
+        overlayScope = null
         super.onDestroy()
     }
 

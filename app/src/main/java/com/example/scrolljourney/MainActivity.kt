@@ -70,6 +70,7 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         if (::trackingController.isInitialized) {
             trackingController.refreshAccessibilityStatus()
+            trackingController.refreshOverlayPermissionStatus()
         }
     }
 
