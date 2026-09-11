@@ -6,6 +6,7 @@ import com.example.scrolljourney.data.repository.PersistentScrollRepository
 import com.example.scrolljourney.domain.distance.CalibrationProfileProvider
 import com.example.scrolljourney.domain.distance.EmptyCalibrationProfileProvider
 import com.example.scrolljourney.domain.tracking.InMemoryTrackingStatusController
+import com.example.scrolljourney.domain.tracking.ProcessedScroll
 import com.example.scrolljourney.domain.tracking.ScrollEventSink
 import com.example.scrolljourney.domain.tracking.TrackingStatusController
 import com.example.scrolljourney.gamification.Achievement
@@ -80,6 +81,10 @@ object ScrollTrackingDependencies {
      */
     fun achievementUnlockEvents(filesDir: File): SharedFlow<Achievement> =
         scrollRepository(filesDir).newlyUnlockedAchievements
+
+    /** The process-wide stream of every processed scroll — used by calibration to harvest ACTUAL_DELTA samples. */
+    fun processedScrollEvents(filesDir: File): SharedFlow<ProcessedScroll> =
+        scrollRepository(filesDir).processedScrolls
 
     @Volatile
     private var current = ScrollTrackingDependencySnapshot(

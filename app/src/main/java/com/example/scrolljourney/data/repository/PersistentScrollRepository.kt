@@ -61,6 +61,11 @@ class PersistentScrollRepository(
     /** Emits once per achievement the moment it transitions from locked to unlocked. No replay — a one-shot celebratory event stream, not steady state. */
     val newlyUnlockedAchievements: SharedFlow<Achievement> = _newlyUnlockedAchievements.asSharedFlow()
 
+    private val _processedScrolls = MutableSharedFlow<ProcessedScroll>(extraBufferCapacity = 16)
+
+    /** Emits every processed scroll as it's recorded — e.g. consumed by calibration to harvest ACTUAL_DELTA samples. */
+    val processedScrolls: SharedFlow<ProcessedScroll> = _processedScrolls.asSharedFlow()
+
     private val saveRequests = MutableSharedFlow<Unit>(
         extraBufferCapacity = 1,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
@@ -106,6 +111,7 @@ class PersistentScrollRepository(
         )
         updateGamification(event)
         saveRequests.tryEmit(Unit)
+        _processedScrolls.tryEmit(event)
     }
 
     private fun updateGamification(event: ProcessedScroll) {

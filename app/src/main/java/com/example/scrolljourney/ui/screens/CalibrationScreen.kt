@@ -150,7 +150,7 @@ private fun CalibrationInfoCard(modifier: Modifier = Modifier) {
         )
 
         Text(
-            text = "Calibration helps ScrollJourney estimate scroll distance more accurately. During calibration, perform natural scrolling motions and take note of the distance covered. We'll learn from your device's behavior.",
+            text = "Calibration helps estimate scroll distance more accurately for scrolls we can't measure directly. Just scroll normally in this app or any other for a few seconds — we'll learn a baseline from the scrolls we can measure precisely.",
             fontSize = 12.sp,
             color = extra.onReward,
             lineHeight = 18.sp

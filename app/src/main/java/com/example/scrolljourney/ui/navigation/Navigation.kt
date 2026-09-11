@@ -143,8 +143,8 @@ fun ScrollJourneyNavigation(
                 ScrollJourneyScreen.CALIBRATION -> {
                     CalibrationScreen(
                         state = calibrationState,
-                        onStartCalibration = { /* TODO: wire to viewModel */ },
-                        onCancelCalibration = { /* TODO: wire to viewModel */ },
+                        onStartCalibration = { viewModel.startCalibration() },
+                        onCancelCalibration = { viewModel.cancelCalibration() },
                         onNavigateBack = { currentScreen = ScrollJourneyScreen.DASHBOARD }
                     )
                 }
