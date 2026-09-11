@@ -3,37 +3,46 @@ package com.example.scrolljourney.ui.theme
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
-// Energetic Neobrutalism Minimalist Palette — the only 10 hex values used anywhere in the UI.
+// Neo-Brutalist Color Palette
+val NeoCream = Color(0xFFF7F3EA)
+val NeoYellow = Color(0xFFFFD928)
+val NeoPurple = Color(0xFFA855F7)
+val NeoPink = Color(0xFFFF3B8D)
+val NeoGreen = Color(0xFF36E58D)
+val NeoBlue = Color(0xFF5B8DEF)
+val NeoOrange = Color(0xFFFF914D)
+val NeoBlack = Color(0xFF111111)
+val NeoWhite = Color(0xFFFFFFFF)
 
-// Light group
-val PaletteCoral = Color(0xFFFF6F61)
-val PaletteIndigo = Color(0xFF4B0082)
-val PaletteSkyBlue = Color(0xFF00BFFF)
-val PaletteGold = Color(0xFFFFD700) // shared reward color, both themes
-val PaletteWhite = Color(0xFFFFFFFF)
-
-// Dark group
-val PaletteCharcoal = Color(0xFF333333)
-val PalettePink = Color(0xFFFF4081)
-val PaletteSpringGreen = Color(0xFF00FF7F)
-val PaletteViolet = Color(0xFF8A2BE2)
-// PaletteGold reused here (shared reward color)
+// Legacy palette aliases to maintain compatibility across existing screens if referenced
+val PaletteCoral = NeoOrange
+val PaletteIndigo = NeoBlack
+val PaletteSkyBlue = NeoBlue
+val PaletteGold = NeoYellow
+val PaletteWhite = NeoWhite
+val PaletteCharcoal = NeoBlack
+val PalettePink = NeoPink
+val PaletteSpringGreen = NeoGreen
+val PaletteViolet = NeoPurple
 
 // Custom roles Material3's ColorScheme has no slot for.
 data class ScrollJourneyExtraColors(
-    val reward: Color,
-    val onReward: Color,
-    val success: Color,
-    val onSuccess: Color,
-    val borderInk: Color,
+    val cream: Color = NeoCream,
+    val yellow: Color = NeoYellow,
+    val purple: Color = NeoPurple,
+    val pink: Color = NeoPink,
+    val green: Color = NeoGreen,
+    val blue: Color = NeoBlue,
+    val orange: Color = NeoOrange,
+    val black: Color = NeoBlack,
+    val reward: Color = NeoYellow,
+    val onReward: Color = NeoBlack,
+    val success: Color = NeoGreen,
+    val onSuccess: Color = NeoBlack,
+    val borderInk: Color = NeoBlack,
 )
 
 val LocalScrollJourneyColors = staticCompositionLocalOf {
-    ScrollJourneyExtraColors(
-        reward = PaletteGold,
-        onReward = PaletteIndigo,
-        success = PaletteSkyBlue,
-        onSuccess = PaletteWhite,
-        borderInk = PaletteCharcoal,
-    )
+    ScrollJourneyExtraColors()
 }
+
