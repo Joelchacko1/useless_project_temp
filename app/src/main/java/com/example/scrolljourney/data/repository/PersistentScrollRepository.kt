@@ -254,7 +254,7 @@ class PersistentScrollRepository(
          * problem at a different layer. This only affects display counting, never distance
          * accumulation.
          */
-        private const val GESTURE_SESSION_GAP_MS = 500L
+        internal const val GESTURE_SESSION_GAP_MS = 500L
 
         /**
          * How long to wait after the last recorded scroll before writing to disk. A continuous
