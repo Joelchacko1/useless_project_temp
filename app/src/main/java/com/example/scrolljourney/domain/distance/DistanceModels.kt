@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
  * A persisted calibration summary. The median is the robust value used for estimates; the mean
  * is retained for diagnostics and future calibration UX.
  */
+@Serializable
 data class CalibrationProfile(
     val id: String,
     val createdAtEpochMs: Long,

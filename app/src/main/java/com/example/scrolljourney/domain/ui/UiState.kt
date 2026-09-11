@@ -37,6 +37,7 @@ data class TrackingUiState(
     val isTrackingEnabled: Boolean = false,
     val serviceConnected: Boolean = false,
     val isAccessibilityPermissionGranted: Boolean = false,
+    val isOverlayPermissionGranted: Boolean = false,
     val activeSinceEpochMs: Long? = null,
     val isLoading: Boolean = false,
     val error: String? = null

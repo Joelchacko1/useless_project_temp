@@ -55,26 +55,36 @@ fun ScrollJourneyNavigation(
 
     val extra = LocalScrollJourneyColors.current
 
-    var showAccessibilityPrompt by remember { mutableStateOf(false) }
+    // Covers both permission prompts below: reset true on every app entry (cold start or
+    // returning from background), so a "Not now" only hides them for the current visit.
+    var showPermissionPrompt by remember { mutableStateOf(false) }
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_START) {
-                showAccessibilityPrompt = true
+                showPermissionPrompt = true
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    if (showAccessibilityPrompt && !trackingState.isAccessibilityPermissionGranted) {
+    if (showPermissionPrompt && !trackingState.isAccessibilityPermissionGranted) {
         AccessibilityPermissionDialog(
             onOpenSettings = {
                 viewModel.openAccessibilitySettings()
                 onOpenAccessibilitySettings()
-                showAccessibilityPrompt = false
+                showPermissionPrompt = false
             },
-            onDismiss = { showAccessibilityPrompt = false },
+            onDismiss = { showPermissionPrompt = false },
+        )
+    } else if (showPermissionPrompt && !trackingState.isOverlayPermissionGranted) {
+        OverlayPermissionDialog(
+            onOpenSettings = {
+                viewModel.openOverlaySettings()
+                showPermissionPrompt = false
+            },
+            onDismiss = { showPermissionPrompt = false },
         )
     }
 
@@ -133,8 +143,8 @@ fun ScrollJourneyNavigation(
                 ScrollJourneyScreen.CALIBRATION -> {
                     CalibrationScreen(
                         state = calibrationState,
-                        onStartCalibration = { /* TODO: wire to viewModel */ },
-                        onCancelCalibration = { /* TODO: wire to viewModel */ },
+                        onStartCalibration = { viewModel.startCalibration() },
+                        onCancelCalibration = { viewModel.cancelCalibration() },
                         onNavigateBack = { currentScreen = ScrollJourneyScreen.DASHBOARD }
                     )
                 }
@@ -176,6 +186,31 @@ private fun AccessibilityPermissionDialog(
         },
         confirmButton = {
             TextButton(onClick = onOpenSettings) { Text("Open Accessibility Settings") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Not now") }
+        },
+    )
+}
+
+@Composable
+private fun OverlayPermissionDialog(
+    onOpenSettings: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Show Achievements Over Other Apps") },
+        text = {
+            Text(
+                "To celebrate an achievement the moment it unlocks — even while you're using " +
+                    "another app — ScrollJourney needs the \"draw over other apps\" permission. " +
+                    "Android requires you to turn this on yourself in Settings; tap below to go " +
+                    "straight there.",
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onOpenSettings) { Text("Open Settings") }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Not now") }

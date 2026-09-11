@@ -3,6 +3,7 @@ package com.example.scrolljourney.ui.state
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.scrolljourney.domain.repository.CalibrationRepository
 import com.example.scrolljourney.domain.repository.GamificationRepository
 import com.example.scrolljourney.domain.repository.ScrollStatsRepository
 import com.example.scrolljourney.domain.repository.TrackingController
@@ -15,6 +16,7 @@ import com.example.scrolljourney.domain.ui.StatsUiState
 import com.example.scrolljourney.domain.ui.StatsPeriod
 import com.example.scrolljourney.domain.ui.CalibrationUiState
 import com.example.scrolljourney.domain.ui.PrivacyUiState
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,7 +32,8 @@ import kotlinx.coroutines.launch
 class ScrollJourneyViewModel(
     private val statsRepository: ScrollStatsRepository,
     private val trackingController: TrackingController,
-    private val gamificationRepository: GamificationRepository
+    private val gamificationRepository: GamificationRepository,
+    private val calibrationRepository: CalibrationRepository
 ) : ViewModel() {
 
     // Dashboard State
@@ -110,12 +113,14 @@ class ScrollJourneyViewModel(
         combine(
             trackingController.isTrackingEnabled(),
             trackingController.isServiceConnected(),
-            trackingController.isAccessibilityPermissionGranted()
-        ) { isEnabled, isConnected, isPermissionGranted ->
+            trackingController.isAccessibilityPermissionGranted(),
+            trackingController.isOverlayPermissionGranted()
+        ) { isEnabled, isConnected, isPermissionGranted, isOverlayGranted ->
             TrackingUiState(
                 isTrackingEnabled = isEnabled,
                 serviceConnected = isConnected,
                 isAccessibilityPermissionGranted = isPermissionGranted,
+                isOverlayPermissionGranted = isOverlayGranted,
                 isLoading = false
             )
         }.onEach { newState ->
@@ -185,8 +190,53 @@ class ScrollJourneyViewModel(
         trackingController.openAccessibilitySettings()
     }
 
+    fun openOverlaySettings() {
+        trackingController.openOverlaySettings()
+    }
+
     fun selectStatsPeriod(period: StatsPeriod) {
         _statsState.value = _statsState.value.copy(selectedPeriod = period)
+    }
+
+    private var calibrationProgressJob: Job? = null
+
+    fun startCalibration() {
+        val tracking = _trackingState.value
+        if (!tracking.isTrackingEnabled || !tracking.serviceConnected) {
+            _calibrationState.value = CalibrationUiState(
+                error = "Enable tracking and grant accessibility permission before calibrating.",
+            )
+            return
+        }
+        calibrationProgressJob?.cancel()
+        viewModelScope.launch {
+            val id = calibrationRepository.startCalibration()
+            calibrationProgressJob = calibrationRepository.observeCalibrationProgress(id)
+                .onEach { progress ->
+                    _calibrationState.value = CalibrationUiState(
+                        isRunning = !progress.isCompleted,
+                        isCompleted = progress.isCompleted,
+                        sampleCount = progress.sampleCount,
+                        targetSampleCount = progress.targetSampleCount,
+                        medianDistanceMeters = progress.medianDistanceMeters,
+                        meanDistanceMeters = progress.meanDistanceMeters,
+                        progress = if (progress.targetSampleCount > 0) {
+                            (progress.sampleCount.toFloat() / progress.targetSampleCount).coerceIn(0f, 1f)
+                        } else {
+                            0f
+                        },
+                        error = progress.error,
+                    )
+                }.launchIn(viewModelScope)
+        }
+    }
+
+    fun cancelCalibration() {
+        viewModelScope.launch {
+            calibrationRepository.cancelCalibration()
+        }
+        calibrationProgressJob?.cancel()
+        _calibrationState.value = CalibrationUiState()
     }
 
     companion object {

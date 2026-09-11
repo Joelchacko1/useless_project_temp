@@ -143,7 +143,7 @@ fun DashboardScreen(
 
 /**
  * Bold Yellow Header:
- * - Title: "ScrollJourney"
+ * - Title: "ThondiEngotta"
  * - Subtitle: "SCROLL LESS • LIVE MORE"
  * - Right icon: Settings gear icon (NO profile icon)
  */
@@ -173,7 +173,7 @@ private fun DashboardTopBar(
     ) {
         Column {
             Text(
-                text = "ScrollJourney",
+                text = "ThondiEngotta",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Black,
                 letterSpacing = (-0.5).sp,

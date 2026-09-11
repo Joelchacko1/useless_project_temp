@@ -77,6 +77,12 @@ class MockTrackingController : TrackingController {
     override fun isServiceConnected(): Flow<Boolean> = flowOf(true)
 
     override fun isAccessibilityPermissionGranted(): Flow<Boolean> = flowOf(true)
+
+    override fun isOverlayPermissionGranted(): Flow<Boolean> = flowOf(true)
+
+    override fun openOverlaySettings() {
+        // Mock implementation
+    }
 }
 
 class MockGamificationRepository : GamificationRepository {

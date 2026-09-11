@@ -9,10 +9,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
+import com.example.scrolljourney.data.persistence.PersistentCalibrationProfileStore
 import com.example.scrolljourney.data.repository.PersistentScrollRepository
-import com.example.scrolljourney.domain.distance.EmptyCalibrationProfileProvider
-import com.example.scrolljourney.integration.CalibrationRepositoryStub
 import com.example.scrolljourney.integration.GamificationRepositoryBridge
+import com.example.scrolljourney.integration.RealCalibrationRepository
 import com.example.scrolljourney.integration.RealTrackingController
 import com.example.scrolljourney.integration.ScrollStatsRepositoryBridge
 import com.example.scrolljourney.tracking.ScrollTrackingDependencies
@@ -20,6 +20,7 @@ import com.example.scrolljourney.ui.navigation.ScrollJourneyNavigation
 import com.example.scrolljourney.ui.state.ScrollJourneyViewModel
 import com.example.scrolljourney.ui.theme.ScrollJourneyTheme
 import kotlinx.coroutines.launch
+import java.io.File
 
 class MainActivity : ComponentActivity() {
 
@@ -31,10 +32,13 @@ class MainActivity : ComponentActivity() {
 
         scrollRepository = ScrollTrackingDependencies.scrollRepository(applicationContext.filesDir)
         val trackingStatusController = ScrollTrackingDependencies.trackingStatusController(applicationContext)
+        val calibrationProfileStore = PersistentCalibrationProfileStore(
+            File(applicationContext.filesDir, "calibration_profile.json"),
+        )
 
         ScrollTrackingDependencies.configure(
             scrollEventSink = scrollRepository,
-            calibrationProfileProvider = EmptyCalibrationProfileProvider,
+            calibrationProfileProvider = calibrationProfileStore,
             trackingStatusController = trackingStatusController,
         )
 
@@ -42,6 +46,11 @@ class MainActivity : ComponentActivity() {
 
         val statsBridge = ScrollStatsRepositoryBridge(scrollRepository)
         val gamificationBridge = GamificationRepositoryBridge(scrollRepository)
+        val calibrationRepository = RealCalibrationRepository(
+            processedScrolls = ScrollTrackingDependencies.processedScrollEvents(applicationContext.filesDir),
+            profileStore = calibrationProfileStore,
+            externalScope = lifecycleScope,
+        )
 
         enableEdgeToEdge()
         setContent {
@@ -51,6 +60,7 @@ class MainActivity : ComponentActivity() {
                         statsRepository = statsBridge,
                         trackingController = trackingController,
                         gamificationRepository = gamificationBridge,
+                        calibrationRepository = calibrationRepository,
                     )
                 }
 
@@ -70,6 +80,7 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         if (::trackingController.isInitialized) {
             trackingController.refreshAccessibilityStatus()
+            trackingController.refreshOverlayPermissionStatus()
         }
     }
 

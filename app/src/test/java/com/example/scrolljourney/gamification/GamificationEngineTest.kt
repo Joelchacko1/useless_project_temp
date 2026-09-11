@@ -33,6 +33,10 @@ class GamificationEngineTest {
 
         val preservedAchievements = GamificationEngine.evaluateAchievements(500.0, listOf("ACH_1KM"))
         assertTrue(preservedAchievements.first { it.id == "ACH_1KM" }.isUnlocked)
+
+        val unlockedFirstRoast = GamificationEngine.evaluateAchievements(200.0, emptyList())
+        assertTrue(unlockedFirstRoast.first { it.id == "ACH_0_2KM" }.isUnlocked)
+        assertFalse(unlockedFirstRoast.first { it.id == "ACH_0_5KM" }.isUnlocked)
     }
 
     @Test

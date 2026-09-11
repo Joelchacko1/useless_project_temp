@@ -4,6 +4,7 @@ import android.util.Log
 import com.example.scrolljourney.data.persistence.PersistedScrollData
 import com.example.scrolljourney.data.persistence.ScrollDataStore
 import com.example.scrolljourney.domain.data.*
+import com.example.scrolljourney.gamification.Achievement
 import com.example.scrolljourney.gamification.GamificationEngine
 import com.example.scrolljourney.gamification.GamificationState
 import kotlinx.coroutines.CoroutineScope
@@ -12,7 +13,9 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.map
@@ -52,6 +55,16 @@ class PersistentScrollRepository(
         ),
     )
     val gamificationState: StateFlow<GamificationState> = _gamificationState.asStateFlow()
+
+    private val _newlyUnlockedAchievements = MutableSharedFlow<Achievement>(extraBufferCapacity = 4)
+
+    /** Emits once per achievement the moment it transitions from locked to unlocked. No replay — a one-shot celebratory event stream, not steady state. */
+    val newlyUnlockedAchievements: SharedFlow<Achievement> = _newlyUnlockedAchievements.asSharedFlow()
+
+    private val _processedScrolls = MutableSharedFlow<ProcessedScroll>(extraBufferCapacity = 16)
+
+    /** Emits every processed scroll as it's recorded — e.g. consumed by calibration to harvest ACTUAL_DELTA samples. */
+    val processedScrolls: SharedFlow<ProcessedScroll> = _processedScrolls.asSharedFlow()
 
     private val saveRequests = MutableSharedFlow<Unit>(
         extraBufferCapacity = 1,
@@ -98,6 +111,7 @@ class PersistentScrollRepository(
         )
         updateGamification(event)
         saveRequests.tryEmit(Unit)
+        _processedScrolls.tryEmit(event)
     }
 
     private fun updateGamification(event: ProcessedScroll) {
@@ -114,6 +128,9 @@ class PersistentScrollRepository(
             dateKey,
         )
 
+        val previouslyUnlockedIds = current.unlockedAchievements.toSet()
+        val newlyUnlocked = newAchievements.filter { it.isUnlocked && it.id !in previouslyUnlockedIds }
+
         _gamificationState.value = current.copy(
             totalXp = newXp,
             currentLevel = newLevel,
@@ -121,6 +138,8 @@ class PersistentScrollRepository(
             currentStreakDays = newStreak,
             lastActiveDateKey = dateKey,
         )
+
+        newlyUnlocked.forEach { _newlyUnlockedAchievements.tryEmit(it) }
     }
 
     override fun observeToday(): Flow<AggregatedStats> {
@@ -235,7 +254,7 @@ class PersistentScrollRepository(
          * problem at a different layer. This only affects display counting, never distance
          * accumulation.
          */
-        private const val GESTURE_SESSION_GAP_MS = 500L
+        internal const val GESTURE_SESSION_GAP_MS = 500L
 
         /**
          * How long to wait after the last recorded scroll before writing to disk. A continuous

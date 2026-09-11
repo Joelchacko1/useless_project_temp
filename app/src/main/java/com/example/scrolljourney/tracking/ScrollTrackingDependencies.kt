@@ -6,11 +6,14 @@ import com.example.scrolljourney.data.repository.PersistentScrollRepository
 import com.example.scrolljourney.domain.distance.CalibrationProfileProvider
 import com.example.scrolljourney.domain.distance.EmptyCalibrationProfileProvider
 import com.example.scrolljourney.domain.tracking.InMemoryTrackingStatusController
+import com.example.scrolljourney.domain.tracking.ProcessedScroll
 import com.example.scrolljourney.domain.tracking.ScrollEventSink
 import com.example.scrolljourney.domain.tracking.TrackingStatusController
+import com.example.scrolljourney.gamification.Achievement
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -70,6 +73,18 @@ object ScrollTrackingDependencies {
             return repository
         }
     }
+
+    /**
+     * The process-wide stream of achievement unlocks, reachable without depending on the
+     * concrete repository type — e.g. from [ScrollAccessibilityService], which otherwise only
+     * ever sees dependencies through [ScrollEventSink]/[snapshot].
+     */
+    fun achievementUnlockEvents(filesDir: File): SharedFlow<Achievement> =
+        scrollRepository(filesDir).newlyUnlockedAchievements
+
+    /** The process-wide stream of every processed scroll — used by calibration to harvest ACTUAL_DELTA samples. */
+    fun processedScrollEvents(filesDir: File): SharedFlow<ProcessedScroll> =
+        scrollRepository(filesDir).processedScrolls
 
     @Volatile
     private var current = ScrollTrackingDependencySnapshot(
