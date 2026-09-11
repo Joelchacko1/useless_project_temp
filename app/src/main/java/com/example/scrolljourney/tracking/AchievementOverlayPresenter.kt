@@ -91,7 +91,7 @@ class AchievementOverlayPresenter(private val context: Context) {
 
     companion object {
         private const val LOG_TAG = "ScrollJourney"
-        private const val DISPLAY_DURATION_MS = 3500L
+        private const val DISPLAY_DURATION_MS = 6500L
         private const val TOP_MARGIN_DP = 48
     }
 }
