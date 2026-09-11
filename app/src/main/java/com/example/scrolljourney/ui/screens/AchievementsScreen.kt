@@ -1,6 +1,7 @@
 package com.example.scrolljourney.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,29 +14,26 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.scrolljourney.domain.ui.AchievementCard
 import com.example.scrolljourney.domain.ui.AchievementsUiState
+import com.example.scrolljourney.ui.components.NeoBadge
+import com.example.scrolljourney.ui.components.NeoDimens
+import com.example.scrolljourney.ui.components.NeoPanel
+import com.example.scrolljourney.ui.components.NeoTopBar
+import com.example.scrolljourney.ui.theme.LocalScrollJourneyColors
 import com.example.scrolljourney.ui.theme.ScrollJourneyTheme
-import com.example.scrolljourney.ui.theme.Secondary40
 
 @Composable
 fun AchievementsScreen(
@@ -43,54 +41,36 @@ fun AchievementsScreen(
     onNavigateBack: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    val extra = LocalScrollJourneyColors.current
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // Top app bar
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onNavigateBack) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back"
-                )
-            }
-
-            Text(
-                text = "Achievements",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
-            )
-
-            Box(modifier = Modifier.fillMaxWidth(0.3f))
-        }
+        NeoTopBar(
+            title = "Achievements",
+            fillColor = extra.reward,
+            contentColor = extra.onReward,
+            onNavigateBack = onNavigateBack
+        )
 
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(vertical = 16.dp)
+                .padding(horizontal = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(vertical = 8.dp)
         ) {
-            // Progress header
             item {
                 AchievementsProgressCard(state)
             }
 
-            // Achievements list
-            items(state.achievements) { achievement ->
-                AchievementCardComponent(achievement)
+            itemsIndexed(state.achievements) { index, achievement ->
+                AchievementCardComponent(achievement, index)
             }
 
             item {
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(8.dp))
             }
         }
     }
@@ -101,31 +81,28 @@ private fun AchievementsProgressCard(
     state: AchievementsUiState,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer
-        )
+    val extra = LocalScrollJourneyColors.current
+    NeoPanel(
+        fillColor = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onPrimary,
+        modifier = modifier.fillMaxWidth()
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = "Achievements Unlocked",
                 fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
+                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f),
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
             Text(
                 text = "${state.totalAchievementsUnlocked} / ${state.achievements.size}",
                 fontSize = 32.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.secondary,
+                fontWeight = FontWeight.Black,
+                color = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.padding(bottom = 12.dp)
             )
 
@@ -134,14 +111,14 @@ private fun AchievementsProgressCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp),
-                color = MaterialTheme.colorScheme.secondary,
-                trackColor = MaterialTheme.colorScheme.surfaceVariant
+                color = extra.reward,
+                trackColor = MaterialTheme.colorScheme.background.copy(alpha = 0.2f)
             )
 
             Text(
                 text = "%.0f%% Complete".format(state.unlockedPercentage),
                 fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                color = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.padding(top = 8.dp)
             )
         }
@@ -151,54 +128,54 @@ private fun AchievementsProgressCard(
 @Composable
 private fun AchievementCardComponent(
     achievement: AchievementCard,
+    index: Int,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(
-                color = if (achievement.isUnlocked)
-                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                else
-                    MaterialTheme.colorScheme.surfaceContainer
-            ),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (achievement.isUnlocked)
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f)
-            else
-                MaterialTheme.colorScheme.surfaceContainer
-        )
+    val extra = LocalScrollJourneyColors.current
+    val fills = listOf(
+        MaterialTheme.colorScheme.primary,
+        MaterialTheme.colorScheme.secondary,
+        MaterialTheme.colorScheme.tertiary,
+        extra.reward,
+        MaterialTheme.colorScheme.background,
+    )
+    val inks = listOf(
+        MaterialTheme.colorScheme.onPrimary,
+        MaterialTheme.colorScheme.onSecondary,
+        MaterialTheme.colorScheme.onTertiary,
+        extra.onReward,
+        MaterialTheme.colorScheme.onBackground,
+    )
+    val slot = index % fills.size
+    val fill = fills[slot]
+    val ink = inks[slot]
+
+    NeoPanel(
+        fillColor = fill,
+        contentColor = ink,
+        modifier = modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.Top
         ) {
-            // Icon/Badge
+            val badgeShape = RoundedCornerShape(NeoDimens.CornerRadius)
             Box(
                 modifier = Modifier
                     .size(56.dp)
                     .background(
-                        color = if (achievement.isUnlocked)
-                            Secondary40
-                        else
-                            MaterialTheme.colorScheme.surfaceVariant,
-                        shape = RoundedCornerShape(12.dp)
-                    ),
+                        color = if (achievement.isUnlocked) extra.reward else MaterialTheme.colorScheme.background,
+                        shape = badgeShape
+                    )
+                    .border(NeoDimens.BorderWidthNested, extra.borderInk, badgeShape),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = if (achievement.isUnlocked) "✓" else "?",
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
-                    color = if (achievement.isUnlocked)
-                        Color.White
-                    else
-                        MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.align(Alignment.Center)
+                    color = if (achievement.isUnlocked) extra.onReward else extra.borderInk,
                 )
             }
 
@@ -213,23 +190,22 @@ private fun AchievementCardComponent(
                             text = achievement.title,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = ink
                         )
 
                         Text(
                             text = achievement.description,
                             fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            color = ink.copy(alpha = 0.7f),
                             modifier = Modifier.padding(top = 2.dp)
                         )
                     }
 
                     if (achievement.isUnlocked) {
-                        Text(
+                        NeoBadge(
                             text = "+${achievement.xpReward}",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Secondary40
+                            fillColor = extra.reward,
+                            contentColor = extra.onReward
                         )
                     }
                 }
@@ -242,14 +218,14 @@ private fun AchievementCardComponent(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(4.dp),
-                        color = Secondary40,
-                        trackColor = MaterialTheme.colorScheme.surfaceVariant
+                        color = extra.reward,
+                        trackColor = extra.borderInk.copy(alpha = 0.15f)
                     )
 
                     Text(
                         text = "${achievement.progress}/${achievement.progressMax}",
                         fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                        color = ink.copy(alpha = 0.6f),
                         modifier = Modifier.padding(top = 4.dp)
                     )
                 }
@@ -259,7 +235,7 @@ private fun AchievementCardComponent(
                     Text(
                         text = "Unlocked",
                         fontSize = 11.sp,
-                        color = Secondary40.copy(alpha = 0.8f),
+                        color = ink.copy(alpha = 0.8f),
                     )
                 }
             }
