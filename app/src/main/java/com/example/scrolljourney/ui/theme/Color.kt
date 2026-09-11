@@ -1,21 +1,39 @@
 package com.example.scrolljourney.ui.theme
 
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
-// Primary: Vibrant blue-green for the main brand color (modern, gamified feel)
-val Primary80 = Color(0xFF80D4FF)
-val Primary40 = Color(0xFF0096D1)
+// Energetic Neobrutalism Minimalist Palette — the only 10 hex values used anywhere in the UI.
 
-// Secondary: Orange-gold for accent and rewards (achievement/XP feel)
-val Secondary80 = Color(0xFFFFD580)
-val Secondary40 = Color(0xFFFF9800)
+// Light group
+val PaletteCoral = Color(0xFFFF6F61)
+val PaletteIndigo = Color(0xFF4B0082)
+val PaletteSkyBlue = Color(0xFF00BFFF)
+val PaletteGold = Color(0xFFFFD700) // shared reward color, both themes
+val PaletteWhite = Color(0xFFFFFFFF)
 
-// Tertiary: Purple for tertiary accents
-val Tertiary80 = Color(0xFFE6B3FF)
-val Tertiary40 = Color(0xFFAB47BC)
+// Dark group
+val PaletteCharcoal = Color(0xFF333333)
+val PalettePink = Color(0xFFFF4081)
+val PaletteSpringGreen = Color(0xFF00FF7F)
+val PaletteViolet = Color(0xFF8A2BE2)
+// PaletteGold reused here (shared reward color)
 
-// Additional gamification colors
-val SuccessGreen = Color(0xFF4CAF50)
-val WarningOrange = Color(0xFFFF9800)
-val ErrorRed = Color(0xFFE91E63)
-val NeutralGrey = Color(0xFF9E9E9E)
+// Custom roles Material3's ColorScheme has no slot for.
+data class ScrollJourneyExtraColors(
+    val reward: Color,
+    val onReward: Color,
+    val success: Color,
+    val onSuccess: Color,
+    val borderInk: Color,
+)
+
+val LocalScrollJourneyColors = staticCompositionLocalOf {
+    ScrollJourneyExtraColors(
+        reward = PaletteGold,
+        onReward = PaletteIndigo,
+        success = PaletteSkyBlue,
+        onSuccess = PaletteWhite,
+        borderInk = PaletteCharcoal,
+    )
+}
