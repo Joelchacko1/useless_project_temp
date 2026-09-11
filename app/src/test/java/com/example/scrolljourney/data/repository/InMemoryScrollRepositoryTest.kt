@@ -48,7 +48,7 @@ class InMemoryScrollRepositoryTest {
         assertEquals(200.0, appBreakdown[0].distanceMeters, 0.001)
         
         // Gamification
-        val gamification = repo.gamificationState
+        val gamification = repo.gamificationState.value
         assertEquals(35L, gamification.totalXp) // 350 * 0.1 = 35 XP
         assertEquals(1, gamification.currentLevel) // 35 XP = Level 1
         assertEquals(1, gamification.currentStreakDays) // First day of activity

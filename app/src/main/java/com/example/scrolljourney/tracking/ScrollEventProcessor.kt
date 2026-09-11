@@ -1,5 +1,6 @@
 package com.example.scrolljourney.tracking
 
+import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import com.example.scrolljourney.domain.distance.CalibrationProfile
 import com.example.scrolljourney.domain.distance.HybridDistanceCalculator
@@ -22,13 +23,20 @@ class ScrollEventProcessor(
         rawEvent: RawScrollEvent,
         calibrationProfile: CalibrationProfile?,
     ): ProcessedScroll? {
-        if (rawEvent.eventType != AccessibilityEvent.TYPE_VIEW_SCROLLED) return null
+        if (rawEvent.eventType != AccessibilityEvent.TYPE_VIEW_SCROLLED) {
+            Log.d(DEBUG_TAG, "process: dropped, wrong eventType=${rawEvent.eventType}")
+            return null
+        }
         val packageName = rawEvent.packageName.trim()
-        if (packageName.isEmpty() || rawEvent.timestampEpochMs < 0L) return null
+        if (packageName.isEmpty() || rawEvent.timestampEpochMs < 0L) {
+            Log.d(DEBUG_TAG, "process: dropped, empty package or negative timestamp")
+            return null
+        }
 
         val state = stateFor(packageName)
         val previousObserved = state.lastObserved
         if (previousObserved != null && rawEvent.timestampEpochMs < previousObserved.timestampEpochMs) {
+            Log.d(DEBUG_TAG, "process: dropped, out-of-order timestamp package=$packageName")
             return null
         }
 
@@ -37,8 +45,19 @@ class ScrollEventProcessor(
         state.lastObserved = normalizedEvent
 
         val direction = ScrollDirectionResolver.resolve(effectiveEvent)
-        if (direction == ScrollDirection.UNKNOWN) return null
-        if (state.lastAccepted?.isDuplicateOf(effectiveEvent) == true) return null
+        if (direction == ScrollDirection.UNKNOWN) {
+            Log.d(
+                DEBUG_TAG,
+                "process: dropped, direction UNKNOWN deltaX=${effectiveEvent.deltaX} deltaY=${effectiveEvent.deltaY} " +
+                    "fromIndex=${effectiveEvent.fromIndex} toIndex=${effectiveEvent.toIndex} " +
+                    "scrollX=${effectiveEvent.scrollX} scrollY=${effectiveEvent.scrollY}",
+            )
+            return null
+        }
+        if (state.lastAccepted?.isDuplicateOf(effectiveEvent) == true) {
+            Log.d(DEBUG_TAG, "process: dropped, duplicate callback package=$packageName")
+            return null
+        }
 
         val estimate = distanceCalculator.estimate(effectiveEvent, calibrationProfile)
         val processed = ProcessedScroll(
@@ -113,5 +132,8 @@ class ScrollEventProcessor(
          * not separate scrolls. Position-changing callbacks remain distinct measurements.
          */
         const val DUPLICATE_CALLBACK_WINDOW_MS = 250L
+
+        /** TEMPORARY diagnostic tag for pipeline tracing; safe to remove once tracking is verified. */
+        private const val DEBUG_TAG = "ScrollJourneyDebug"
     }
 }

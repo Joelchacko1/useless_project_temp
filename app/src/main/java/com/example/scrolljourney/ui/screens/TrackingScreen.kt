@@ -250,8 +250,7 @@ private fun TrackingStatusCard(
                 Text(
                     text = "Active since app start",
                     fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    alpha = 0.6f
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 )
             }
         }
@@ -442,8 +441,7 @@ private fun InformationCard(modifier: Modifier = Modifier) {
             Text(
                 text = "When tracking is enabled, ScrollJourney listens for scroll events on your Android device through the accessibility API. All data is stored locally on your device — nothing is sent to any server.",
                 fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSurface,
-                alpha = 0.8f,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                 lineHeight = 18.sp
             )
         }

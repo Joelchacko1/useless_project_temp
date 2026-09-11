@@ -168,8 +168,7 @@ private fun PrimaryMetricCard(
             Text(
                 text = "Your thumb travelled",
                 fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                alpha = 0.7f
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -186,8 +185,7 @@ private fun PrimaryMetricCard(
             Text(
                 text = "(Estimated scroll distance)",
                 fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                alpha = 0.6f
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f),
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -212,8 +210,7 @@ private fun PrimaryMetricCard(
                     Text(
                         text = "Scrolls",
                         fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        alpha = 0.7f
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
                     )
                 }
 
@@ -227,8 +224,7 @@ private fun PrimaryMetricCard(
                     Text(
                         text = "Tracking",
                         fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        alpha = 0.7f
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
                     )
                 }
             }
@@ -350,8 +346,7 @@ private fun XpProgressCard(
             Text(
                 text = "${state.xpToNextLevel} XP to next level",
                 fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSurface,
-                alpha = 0.6f,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 modifier = Modifier.padding(top = 8.dp)
             )
         }
@@ -388,8 +383,7 @@ private fun StreakCard(
             Text(
                 text = "Day Streak",
                 fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSurface,
-                alpha = 0.6f
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
             )
         }
 
@@ -408,8 +402,7 @@ private fun StreakCard(
             Text(
                 text = "Best Streak",
                 fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSurface,
-                alpha = 0.6f
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
             )
         }
     }
@@ -454,8 +447,7 @@ private fun TopAppsCard(
                         Text(
                             text = "%.1f km • ${app.scrollCount} scrolls".format(app.distanceMeters / 1000.0),
                             fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            alpha = 0.6f
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         )
                     }
                 }
@@ -506,8 +498,7 @@ private fun CalibrationQuickLink(
                     Text(
                         text = "Improve accuracy",
                         fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        alpha = 0.6f
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                     )
                 }
             }

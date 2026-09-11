@@ -1,14 +1,20 @@
 package com.example.scrolljourney.data.repository
 
+import android.util.Log
 import com.example.scrolljourney.domain.data.*
 import com.example.scrolljourney.gamification.GamificationEngine
 import com.example.scrolljourney.gamification.GamificationState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+
+/** TEMPORARY diagnostic tag for pipeline tracing; safe to remove once tracking is verified. */
+private const val DEBUG_TAG = "ScrollJourneyDebug"
 
 /**
  * An in-memory implementation of the ScrollEventSink and ScrollStatsRepository.
@@ -20,40 +26,49 @@ class InMemoryScrollRepository : ScrollEventSink, ScrollStatsRepository {
     private val events = mutableListOf<ProcessedScroll>()
     private val statsFlow = MutableStateFlow(events.toList())
     
-    // In-memory gamification state
-    var gamificationState = GamificationState(
-        totalXp = 0L,
-        currentLevel = 1,
-        currentStreakDays = 0,
-        lastActiveDateKey = null,
-        unlockedAchievements = emptyList()
+    private val _gamificationState = MutableStateFlow(
+        GamificationState(
+            totalXp = 0L,
+            currentLevel = 1,
+            currentStreakDays = 0,
+            lastActiveDateKey = null,
+            unlockedAchievements = emptyList(),
+        ),
     )
+    val gamificationState: StateFlow<GamificationState> = _gamificationState.asStateFlow()
 
     override suspend fun recordScroll(event: ProcessedScroll) {
         events.add(event)
         statsFlow.value = events.toList()
+        Log.d(
+            DEBUG_TAG,
+            "Repository recorded scroll #${events.size} package=${event.packageName} " +
+                "meters=${event.distanceMeters} timestampEpochMs=${event.timestampEpochMs} " +
+                "dateKey=${DateUtils.getDateKey(event.timestampEpochMs)}",
+        )
         updateGamification(event)
     }
 
     private fun updateGamification(event: ProcessedScroll) {
         val dateKey = DateUtils.getDateKey(event.timestampEpochMs)
-        
+        val current = _gamificationState.value
+
         val totalDistance = events.sumOf { it.distanceMeters }
         val newXp = GamificationEngine.calculateXp(totalDistance)
         val newLevel = GamificationEngine.calculateLevel(newXp)
-        val newAchievements = GamificationEngine.evaluateAchievements(totalDistance, gamificationState.unlockedAchievements)
+        val newAchievements = GamificationEngine.evaluateAchievements(totalDistance, current.unlockedAchievements)
         val newStreak = GamificationEngine.updateStreak(
-            gamificationState.currentStreakDays, 
-            gamificationState.lastActiveDateKey, 
-            dateKey
+            current.currentStreakDays,
+            current.lastActiveDateKey,
+            dateKey,
         )
 
-        gamificationState = gamificationState.copy(
+        _gamificationState.value = current.copy(
             totalXp = newXp,
             currentLevel = newLevel,
             unlockedAchievements = newAchievements.filter { it.isUnlocked }.map { it.id },
             currentStreakDays = newStreak,
-            lastActiveDateKey = dateKey
+            lastActiveDateKey = dateKey,
         )
     }
 
@@ -77,7 +92,8 @@ class InMemoryScrollRepository : ScrollEventSink, ScrollStatsRepository {
                 .map { (packageName, pkgEvents) ->
                     AppDistanceStat(
                         packageName = packageName,
-                        distanceMeters = pkgEvents.sumOf { it.distanceMeters }
+                        distanceMeters = pkgEvents.sumOf { it.distanceMeters },
+                        scrollCount = pkgEvents.size.toLong(),
                     )
                 }
                 .sortedByDescending { it.distanceMeters }
@@ -107,7 +123,13 @@ class InMemoryScrollRepository : ScrollEventSink, ScrollStatsRepository {
             
             val topApps = filteredEvents
                 .groupBy { it.packageName }
-                .map { (pkg, evts) -> AppDistanceStat(pkg, evts.sumOf { it.distanceMeters }) }
+                .map { (pkg, evts) ->
+                    AppDistanceStat(
+                        packageName = pkg,
+                        distanceMeters = evts.sumOf { it.distanceMeters },
+                        scrollCount = evts.size.toLong(),
+                    )
+                }
                 .sortedByDescending { it.distanceMeters }
 
             // Approximation of active tracking time based on count * average scroll duration (e.g. 50ms)

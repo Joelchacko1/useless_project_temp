@@ -117,8 +117,7 @@ private fun AchievementsProgressCard(
             Text(
                 text = "Achievements Unlocked",
                 fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                alpha = 0.7f,
+                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
@@ -220,8 +219,7 @@ private fun AchievementCardComponent(
                         Text(
                             text = achievement.description,
                             fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            alpha = 0.6f,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                             modifier = Modifier.padding(top = 2.dp)
                         )
                     }
@@ -251,8 +249,7 @@ private fun AchievementCardComponent(
                     Text(
                         text = "${achievement.progress}/${achievement.progressMax}",
                         fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        alpha = 0.5f,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                         modifier = Modifier.padding(top = 4.dp)
                     )
                 }
@@ -262,8 +259,7 @@ private fun AchievementCardComponent(
                     Text(
                         text = "Unlocked",
                         fontSize = 11.sp,
-                        color = Secondary40,
-                        alpha = 0.8f
+                        color = Secondary40.copy(alpha = 0.8f),
                     )
                 }
             }

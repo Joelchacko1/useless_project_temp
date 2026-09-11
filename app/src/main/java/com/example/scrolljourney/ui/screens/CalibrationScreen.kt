@@ -270,8 +270,7 @@ private fun CalibrationProgressCard(
                     Text(
                         text = "Samples",
                         fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        alpha = 0.7f
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
                     )
 
                     Text(
@@ -326,8 +325,7 @@ private fun CalibrationResultsCard(
                     Text(
                         text = "Median Distance",
                         fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
-                        alpha = 0.7f
+                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
                     )
                     Text(
                         text = "%.2f m".format(state.medianDistanceMeters),
@@ -341,8 +339,7 @@ private fun CalibrationResultsCard(
                     Text(
                         text = "Mean Distance",
                         fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
-                        alpha = 0.7f
+                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
                     )
                     Text(
                         text = "%.2f m".format(state.meanDistanceMeters),

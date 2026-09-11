@@ -1,5 +1,6 @@
 package com.example.scrolljourney.ui.state
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.scrolljourney.domain.repository.GamificationRepository
@@ -77,7 +78,7 @@ class ScrollJourneyViewModel(
             val totalXpForLevel = 1000L + ((currentLevel - 1) * 500L)
             val xpInCurrentLevel = currentXp - totalXpForLevel
             val xpProgressPercent = if (nextLevelXp > 0) {
-                (xpInCurrentLevel / nextLevelXp).coerceIn(0f, 1f)
+                (xpInCurrentLevel.toFloat() / nextLevelXp).coerceIn(0f, 1f)
             } else {
                 0f
             }
@@ -96,6 +97,11 @@ class ScrollJourneyViewModel(
                 isTrackingActive = isTracking
             )
         }.onEach { newState ->
+            Log.d(
+                DEBUG_TAG,
+                "Dashboard state updated: totalScrolls=${newState.totalScrolls} " +
+                    "totalDistanceMeters=${newState.totalDistanceMeters} isTrackingActive=${newState.isTrackingActive}",
+            )
             _dashboardState.value = newState
         }.launchIn(viewModelScope)
     }
@@ -181,5 +187,10 @@ class ScrollJourneyViewModel(
 
     fun selectStatsPeriod(period: StatsPeriod) {
         _statsState.value = _statsState.value.copy(selectedPeriod = period)
+    }
+
+    companion object {
+        /** TEMPORARY diagnostic tag for pipeline tracing; safe to remove once tracking is verified. */
+        private const val DEBUG_TAG = "ScrollJourneyDebug"
     }
 }

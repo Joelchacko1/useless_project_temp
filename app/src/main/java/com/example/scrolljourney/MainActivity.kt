@@ -8,26 +8,44 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import com.example.scrolljourney.data.mock.MockCalibrationRepository
-import com.example.scrolljourney.data.mock.MockGamificationRepository
-import com.example.scrolljourney.data.mock.MockScrollStatsRepository
-import com.example.scrolljourney.data.mock.MockTrackingController
+import com.example.scrolljourney.data.repository.InMemoryScrollRepository
+import com.example.scrolljourney.domain.distance.EmptyCalibrationProfileProvider
+import com.example.scrolljourney.integration.CalibrationRepositoryStub
+import com.example.scrolljourney.integration.GamificationRepositoryBridge
+import com.example.scrolljourney.integration.RealTrackingController
+import com.example.scrolljourney.integration.ScrollStatsRepositoryBridge
+import com.example.scrolljourney.tracking.ScrollTrackingDependencies
 import com.example.scrolljourney.ui.navigation.ScrollJourneyNavigation
 import com.example.scrolljourney.ui.state.ScrollJourneyViewModel
 import com.example.scrolljourney.ui.theme.ScrollJourneyTheme
 
 class MainActivity : ComponentActivity() {
+
+    private lateinit var trackingController: RealTrackingController
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val scrollRepository = InMemoryScrollRepository()
+
+        ScrollTrackingDependencies.configure(
+            scrollEventSink = scrollRepository,
+            calibrationProfileProvider = EmptyCalibrationProfileProvider,
+        )
+
+        trackingController = RealTrackingController(this, ScrollTrackingDependencies.trackingStatusController)
+
+        val statsBridge = ScrollStatsRepositoryBridge(scrollRepository)
+        val gamificationBridge = GamificationRepositoryBridge(scrollRepository)
+
         enableEdgeToEdge()
         setContent {
             ScrollJourneyTheme {
-                // TODO: Agent 4 to inject real repositories from integration layer
                 val viewModel = remember {
                     ScrollJourneyViewModel(
-                        statsRepository = MockScrollStatsRepository(),
-                        trackingController = MockTrackingController(),
-                        gamificationRepository = MockGamificationRepository()
+                        statsRepository = statsBridge,
+                        trackingController = trackingController,
+                        gamificationRepository = gamificationBridge,
                     )
                 }
 
@@ -35,11 +53,18 @@ class MainActivity : ComponentActivity() {
                     ScrollJourneyNavigation(
                         viewModel = viewModel,
                         onOpenAccessibilitySettings = {
-                            // TODO: Agent 4 to implement accessibility settings navigation
-                        }
+                            trackingController.openAccessibilitySettings()
+                        },
                     )
                 }
             }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (::trackingController.isInitialized) {
+            trackingController.refreshAccessibilityStatus()
         }
     }
 }

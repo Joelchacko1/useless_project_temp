@@ -193,8 +193,7 @@ private fun PeriodStatsCard(
                 Text(
                     text = "Estimated Distance",
                     fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    alpha = 0.7f,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
 
@@ -232,8 +231,7 @@ private fun PeriodStatsCard(
                     Text(
                         text = "Scrolls",
                         fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        alpha = 0.7f
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
                     )
                 }
 
@@ -250,8 +248,7 @@ private fun PeriodStatsCard(
                     Text(
                         text = "Minutes",
                         fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        alpha = 0.7f
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
                     )
                 }
 
@@ -272,8 +269,7 @@ private fun PeriodStatsCard(
                     Text(
                         text = "Avg (m)",
                         fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        alpha = 0.7f
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
                     )
                 }
             }
@@ -344,8 +340,7 @@ private fun AppStatsRow(
                 Text(
                     text = app.packageName,
                     fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    alpha = 0.6f
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 )
             }
 
@@ -362,8 +357,7 @@ private fun AppStatsRow(
         Text(
             text = "${app.scrollCount} scrolls",
             fontSize = 11.sp,
-            color = MaterialTheme.colorScheme.onSurface,
-            alpha = 0.6f
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
         )
     }
 }

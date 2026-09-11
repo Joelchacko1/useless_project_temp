@@ -24,7 +24,7 @@ class ScrollAccessibilityService : AccessibilityService() {
     private var processingDispatcher: ExecutorCoroutineDispatcher? = null
     private var processingScope: CoroutineScope? = null
     private var calibrationProfileLoaded = false
-    private var calibrationProfile = com.example.scrolljourney.domain.distance.CalibrationProfile? null
+    private var calibrationProfile: com.example.scrolljourney.domain.distance.CalibrationProfile? = null
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -38,6 +38,12 @@ class ScrollAccessibilityService : AccessibilityService() {
         processingScope = CoroutineScope(SupervisorJob() + dispatcher)
 
         val dependencies = ScrollTrackingDependencies.snapshot()
+        Log.d(
+            DEBUG_TAG,
+            "onServiceConnected: process=${android.os.Process.myPid()} " +
+                "trackingStateBeforeConnect=${dependencies.trackingStatusController.trackingState.value} " +
+                "sink=${dependencies.scrollEventSink::class.simpleName}",
+        )
         dependencies.trackingStatusController.setServiceConnected(true)
         processingScope?.launch {
             try {
@@ -52,11 +58,39 @@ class ScrollAccessibilityService : AccessibilityService() {
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
+        Log.d(
+            DEBUG_TAG,
+            "onAccessibilityEvent type=${AccessibilityEvent.eventTypeToString(event.eventType)} " +
+                "package=${event.packageName}",
+        )
         val dependencies = ScrollTrackingDependencies.snapshot()
-        if (!dependencies.trackingStatusController.trackingState.value.isTrackingEnabled) return
-        val rawEvent = eventNormalizer.normalize(event) ?: return
-        val scope = processingScope ?: return
-        if (!::eventProcessor.isInitialized) return
+        if (!dependencies.trackingStatusController.trackingState.value.isTrackingEnabled) {
+            Log.d(
+                DEBUG_TAG,
+                "Dropped: tracking disabled, trackingState=${dependencies.trackingStatusController.trackingState.value}",
+            )
+            return
+        }
+        val rawEvent = eventNormalizer.normalize(event)
+        if (rawEvent == null) {
+            Log.d(DEBUG_TAG, "Dropped: normalizer returned null for eventType=${event.eventType}")
+            return
+        }
+        Log.d(
+            DEBUG_TAG,
+            "Normalized package=${rawEvent.packageName} deltaX=${rawEvent.deltaX} deltaY=${rawEvent.deltaY} " +
+                "scrollX=${rawEvent.scrollX} scrollY=${rawEvent.scrollY} fromIndex=${rawEvent.fromIndex} " +
+                "toIndex=${rawEvent.toIndex} timestampEpochMs=${rawEvent.timestampEpochMs}",
+        )
+        val scope = processingScope
+        if (scope == null) {
+            Log.d(DEBUG_TAG, "Dropped: processingScope is null (service not fully connected)")
+            return
+        }
+        if (!::eventProcessor.isInitialized) {
+            Log.d(DEBUG_TAG, "Dropped: eventProcessor not initialized")
+            return
+        }
 
         scope.launch {
             if (!dependencies.trackingStatusController.trackingState.value.isTrackingEnabled) return@launch
@@ -69,6 +103,8 @@ class ScrollAccessibilityService : AccessibilityService() {
                         "Recorded scroll package=${processed.packageName} direction=${processed.direction} " +
                             "method=${processed.estimationMethod} meters=${processed.distanceMeters}",
                     )
+                } else {
+                    Log.d(DEBUG_TAG, "Dropped: processor returned null for package=${rawEvent.packageName}")
                 }
             } catch (error: Exception) {
                 Log.e(
@@ -95,5 +131,8 @@ class ScrollAccessibilityService : AccessibilityService() {
 
     companion object {
         private const val LOG_TAG = "ScrollJourney"
+
+        /** TEMPORARY diagnostic tag for pipeline tracing; safe to remove once tracking is verified. */
+        private const val DEBUG_TAG = "ScrollJourneyDebug"
     }
 }

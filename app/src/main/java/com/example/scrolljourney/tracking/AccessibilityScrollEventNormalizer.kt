@@ -1,6 +1,7 @@
 package com.example.scrolljourney.tracking
 
 import android.os.Build
+import android.os.SystemClock
 import android.view.accessibility.AccessibilityEvent
 import com.example.scrolljourney.domain.tracking.RawScrollEvent
 import java.util.UUID
@@ -11,13 +12,17 @@ import java.util.UUID
  */
 class AccessibilityScrollEventNormalizer(
     private val nowEpochMs: () -> Long = System::currentTimeMillis,
+    private val uptimeMs: () -> Long = SystemClock::uptimeMillis,
     private val idGenerator: () -> String = { UUID.randomUUID().toString() },
 ) {
     fun normalize(event: AccessibilityEvent): RawScrollEvent? {
         if (event.eventType != AccessibilityEvent.TYPE_VIEW_SCROLLED) return null
         return normalizeSnapshot(
             AccessibilityScrollEventSnapshot(
-                timestampEpochMs = event.eventTime,
+                // AccessibilityEvent.eventTime is SystemClock.uptimeMillis()-based, not wall-clock
+                // epoch time. Converting here keeps date-bucketed stats (observeToday/Week/Month)
+                // from silently resolving every event to 1970-01-01.
+                timestampEpochMs = wallClockEventTimeMs(event.eventTime),
                 packageName = event.packageName?.toString(),
                 eventType = event.eventType,
                 deltaX = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) event.scrollDeltaX else null,
@@ -53,6 +58,12 @@ class AccessibilityScrollEventNormalizer(
     }
 
     private fun Int.knownNonNegative(): Int? = takeIf { it >= 0 }
+
+    private fun wallClockEventTimeMs(eventUptimeMs: Long): Long {
+        if (eventUptimeMs <= 0L) return 0L
+        val elapsedSinceEventMs = (uptimeMs() - eventUptimeMs).coerceAtLeast(0L)
+        return nowEpochMs() - elapsedSinceEventMs
+    }
 }
 
 /** Pure input shape used to test normalisation without a device framework event. */
