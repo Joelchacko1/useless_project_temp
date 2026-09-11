@@ -80,6 +80,30 @@ interface TrackingStatusController : TrackingStatusProvider {
 }
 
 /**
+ * Computes the next [TrackingState] for an enabled/connected transition, shared by every
+ * [TrackingStatusController] implementation: tracking is only "active" (has a non-null
+ * [TrackingState.activeSinceEpochMs]) while both enabled and connected, and that timestamp is
+ * preserved across transitions that keep it active rather than being reset.
+ */
+internal fun nextTrackingState(
+    current: TrackingState,
+    enabled: Boolean,
+    connected: Boolean,
+    nowEpochMs: Long,
+): TrackingState {
+    val shouldBeActive = enabled && connected
+    return TrackingState(
+        isTrackingEnabled = enabled,
+        serviceConnected = connected,
+        activeSinceEpochMs = when {
+            !shouldBeActive -> null
+            current.activeSinceEpochMs != null -> current.activeSinceEpochMs
+            else -> nowEpochMs
+        },
+    )
+}
+
+/**
  * Process-local tracking state suitable for the initial integration. It intentionally does not
  * persist the user preference; preference ownership belongs to the data/integration lanes.
  */
@@ -97,24 +121,14 @@ class InMemoryTrackingStatusController(
     override val trackingState: StateFlow<TrackingState> = mutableTrackingState.asStateFlow()
 
     override fun setTrackingEnabled(enabled: Boolean, nowEpochMs: Long) {
-        updateState(enabled, mutableTrackingState.value.serviceConnected, nowEpochMs)
+        mutableTrackingState.value = nextTrackingState(
+            mutableTrackingState.value, enabled, mutableTrackingState.value.serviceConnected, nowEpochMs,
+        )
     }
 
     override fun setServiceConnected(connected: Boolean, nowEpochMs: Long) {
-        updateState(mutableTrackingState.value.isTrackingEnabled, connected, nowEpochMs)
-    }
-
-    private fun updateState(enabled: Boolean, connected: Boolean, nowEpochMs: Long) {
-        val current = mutableTrackingState.value
-        val shouldBeActive = enabled && connected
-        mutableTrackingState.value = TrackingState(
-            isTrackingEnabled = enabled,
-            serviceConnected = connected,
-            activeSinceEpochMs = when {
-                !shouldBeActive -> null
-                current.activeSinceEpochMs != null -> current.activeSinceEpochMs
-                else -> nowEpochMs
-            },
+        mutableTrackingState.value = nextTrackingState(
+            mutableTrackingState.value, mutableTrackingState.value.isTrackingEnabled, connected, nowEpochMs,
         )
     }
 }

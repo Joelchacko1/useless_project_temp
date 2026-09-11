@@ -30,13 +30,15 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         scrollRepository = ScrollTrackingDependencies.scrollRepository(applicationContext.filesDir)
+        val trackingStatusController = ScrollTrackingDependencies.trackingStatusController(applicationContext)
 
         ScrollTrackingDependencies.configure(
             scrollEventSink = scrollRepository,
             calibrationProfileProvider = EmptyCalibrationProfileProvider,
+            trackingStatusController = trackingStatusController,
         )
 
-        trackingController = RealTrackingController(this, ScrollTrackingDependencies.trackingStatusController)
+        trackingController = RealTrackingController(this, trackingStatusController)
 
         val statsBridge = ScrollStatsRepositoryBridge(scrollRepository)
         val gamificationBridge = GamificationRepositoryBridge(scrollRepository)

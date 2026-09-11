@@ -4,13 +4,20 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.scrolljourney.domain.ui.NavigationEvent
 import com.example.scrolljourney.ui.components.NeoBottomNavBar
 import com.example.scrolljourney.ui.screens.AchievementsScreen
@@ -47,6 +54,29 @@ fun ScrollJourneyNavigation(
     val privacyState by viewModel.privacyState.collectAsState()
 
     val extra = LocalScrollJourneyColors.current
+
+    var showAccessibilityPrompt by remember { mutableStateOf(false) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_START) {
+                showAccessibilityPrompt = true
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    if (showAccessibilityPrompt && !trackingState.isAccessibilityPermissionGranted) {
+        AccessibilityPermissionDialog(
+            onOpenSettings = {
+                viewModel.openAccessibilitySettings()
+                onOpenAccessibilitySettings()
+                showAccessibilityPrompt = false
+            },
+            onDismiss = { showAccessibilityPrompt = false },
+        )
+    }
 
     Column(
         modifier = Modifier
@@ -126,4 +156,29 @@ fun ScrollJourneyNavigation(
             onNavigateToAchievements = { currentScreen = ScrollJourneyScreen.ACHIEVEMENTS }
         )
     }
+}
+
+@Composable
+private fun AccessibilityPermissionDialog(
+    onOpenSettings: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Enable Accessibility Access") },
+        text = {
+            Text(
+                "ScrollJourney needs Accessibility permission to detect your scrolls. This is " +
+                    "used only to observe scroll events — never to read screen content, typed " +
+                    "text, or passwords. Android requires you to turn this on yourself in " +
+                    "Settings; tap below to go straight there.",
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onOpenSettings) { Text("Open Accessibility Settings") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Not now") }
+        },
+    )
 }
