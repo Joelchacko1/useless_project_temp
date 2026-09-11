@@ -1,5 +1,8 @@
 package com.example.scrolljourney.gamification
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class GamificationState(
     val totalXp: Long,
     val currentLevel: Int,

@@ -1,6 +1,6 @@
 package com.example.scrolljourney.integration
 
-import com.example.scrolljourney.data.repository.InMemoryScrollRepository
+import com.example.scrolljourney.data.repository.PersistentScrollRepository
 import com.example.scrolljourney.domain.repository.AchievementData
 import com.example.scrolljourney.domain.repository.GamificationRepository
 import com.example.scrolljourney.gamification.GamificationEngine
@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.map
 import kotlin.math.sqrt
 
 class GamificationRepositoryBridge(
-    private val repository: InMemoryScrollRepository,
+    private val repository: PersistentScrollRepository,
 ) : GamificationRepository {
 
     override fun observeCurrentXpAndLevel(): Flow<Pair<Long, Int>> =

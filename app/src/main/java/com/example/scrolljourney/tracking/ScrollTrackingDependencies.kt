@@ -1,10 +1,17 @@
 package com.example.scrolljourney.tracking
 
+import com.example.scrolljourney.data.persistence.ScrollDataStore
+import com.example.scrolljourney.data.repository.PersistentScrollRepository
 import com.example.scrolljourney.domain.distance.CalibrationProfileProvider
 import com.example.scrolljourney.domain.distance.EmptyCalibrationProfileProvider
 import com.example.scrolljourney.domain.tracking.InMemoryTrackingStatusController
 import com.example.scrolljourney.domain.tracking.ScrollEventSink
 import com.example.scrolljourney.domain.tracking.TrackingStatusController
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import java.io.File
 
 /**
  * Narrow app-level bridge for the system-constructed accessibility service.
@@ -20,6 +27,29 @@ object ScrollTrackingDependencies {
      * forever, even though the OS still has the service bound.
      */
     val trackingStatusController: TrackingStatusController = InMemoryTrackingStatusController()
+
+    private val backgroundScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    @Volatile
+    private var scrollRepositoryInstance: PersistentScrollRepository? = null
+
+    /**
+     * Lazily creates the single, process-lifetime [PersistentScrollRepository], the same way
+     * [trackingStatusController] survives MainActivity recreation: a later call from a recreated
+     * Activity gets back the same instance instead of a fresh one that would need to reload from
+     * disk and could miss very recent, not-yet-flushed events.
+     */
+    fun scrollRepository(filesDir: File): PersistentScrollRepository {
+        scrollRepositoryInstance?.let { return it }
+        synchronized(this) {
+            scrollRepositoryInstance?.let { return it }
+            val dataStore = ScrollDataStore(File(filesDir, "scroll_journey_state.json"))
+            val repository = PersistentScrollRepository(dataStore, backgroundScope)
+            scrollRepositoryInstance = repository
+            backgroundScope.launch { repository.restoreFromDisk() }
+            return repository
+        }
+    }
 
     @Volatile
     private var current = ScrollTrackingDependencySnapshot(

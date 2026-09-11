@@ -4,6 +4,7 @@ import com.example.scrolljourney.domain.distance.EstimationMethod
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.serialization.Serializable
 
 /**
  * The tracking state shared with UI and integration code.
@@ -37,6 +38,7 @@ data class RawScrollEvent(
     val maxScrollY: Int?,
 )
 
+@Serializable
 enum class ScrollDirection {
     UP,
     DOWN,
@@ -46,6 +48,7 @@ enum class ScrollDirection {
 }
 
 /** The record published by Agent 1 and persisted by the data implementation. */
+@Serializable
 data class ProcessedScroll(
     val id: String,
     val timestampEpochMs: Long,

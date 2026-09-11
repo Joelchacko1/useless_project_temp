@@ -1,5 +1,7 @@
 package com.example.scrolljourney.domain.distance
 
+import kotlinx.serialization.Serializable
+
 /**
  * A persisted calibration summary. The median is the robust value used for estimates; the mean
  * is retained for diagnostics and future calibration UX.
@@ -13,6 +15,7 @@ data class CalibrationProfile(
     val lastUpdatedEpochMs: Long,
 )
 
+@Serializable
 enum class EstimationMethod {
     ACTUAL_DELTA,
     CALIBRATED_ESTIMATE,
