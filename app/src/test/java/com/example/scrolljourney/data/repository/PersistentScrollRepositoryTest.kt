@@ -214,29 +214,29 @@ class PersistentScrollRepositoryTest {
             repo.newlyUnlockedAchievements.collect { collected.add(it) }
         }
 
-        // Crosses the ACH_1KM (1000m) threshold.
+        // Crosses the ACH_0_2KM (200m) threshold, but not the next one at 500m.
         repo.recordScroll(
             ProcessedScroll(
                 id = "1",
                 timestampEpochMs = Instant.now().toEpochMilli(),
                 packageName = "com.android.chrome",
                 direction = ScrollDirection.UP,
-                distanceMeters = 1200.0,
+                distanceMeters = 250.0,
                 confidence = 1.0f,
                 estimationMethod = EstimationMethod.ACTUAL_DELTA,
             ),
         )
         assertEquals(1, collected.size)
-        assertEquals("ACH_1KM", collected[0].id)
+        assertEquals("ACH_0_2KM", collected[0].id)
 
-        // A further scroll that doesn't cross another threshold must not re-emit ACH_1KM.
+        // A further scroll that doesn't cross another threshold must not re-emit ACH_0_2KM.
         repo.recordScroll(
             ProcessedScroll(
                 id = "2",
                 timestampEpochMs = Instant.now().toEpochMilli(),
                 packageName = "com.android.chrome",
                 direction = ScrollDirection.UP,
-                distanceMeters = 100.0,
+                distanceMeters = 50.0,
                 confidence = 1.0f,
                 estimationMethod = EstimationMethod.ACTUAL_DELTA,
             ),
@@ -254,7 +254,7 @@ class PersistentScrollRepositoryTest {
             repo.newlyUnlockedAchievements.collect { collected.add(it) }
         }
 
-        // One huge scroll crosses ACH_1KM, ACH_5KM, ACH_10KM and ACH_25KM all at once.
+        // One huge scroll crosses every threshold up to ACH_25KM, but not ACH_50KM.
         repo.recordScroll(
             ProcessedScroll(
                 id = "1",
@@ -268,7 +268,7 @@ class PersistentScrollRepositoryTest {
         )
 
         assertEquals(
-            setOf("ACH_1KM", "ACH_5KM", "ACH_10KM", "ACH_25KM"),
+            setOf("ACH_0_2KM", "ACH_0_5KM", "ACH_1KM", "ACH_2KM", "ACH_5KM", "ACH_10KM", "ACH_25KM"),
             collected.map { it.id }.toSet(),
         )
 

@@ -9,11 +9,14 @@ object GamificationEngine {
     const val XP_PER_METER = 0.1 // 100 XP per 1 km
     
     val allAchievements = listOf(
-        Achievement("ACH_1KM", "First Steps", "Scroll 1 km", 1000.0, false),
-        Achievement("ACH_5KM", "Getting Started", "Scroll 5 km", 5000.0, false),
-        Achievement("ACH_10KM", "Thumb Workout", "Scroll 10 km", 10000.0, false),
-        Achievement("ACH_25KM", "Marathon Scroller", "Scroll 25 km", 25000.0, false),
-        Achievement("ACH_100KM", "Centurion", "Scroll 100 km", 100000.0, false)
+        Achievement("ACH_0_2KM", "🏆 First Roast", "Thondi thondi irikkathe vello panikkum pokkude? 😂", 200.0, false),
+        Achievement("ACH_0_5KM", "🏆 Thumb Starter", "Enthada mone, thumb kond marathon aano?", 500.0, false),
+        Achievement("ACH_1KM", "🏆 Thumb Walker", "1 KM aayi... nee nadannirunnenkil fitness aayene! 💀", 1000.0, false),
+        Achievement("ACH_2KM", "🏆 Professional Scroller", "2 KM! Phone alla, treadmill aanu use cheyyunne ennu thonnunnu.", 2000.0, false),
+        Achievement("ACH_5KM", "🏆 Thumb Athlete", "5 KM scroll cheythu... ninte thumb aanu veetile main athlete. 😂", 5000.0, false),
+        Achievement("ACH_10KM", "🏆 Scroll Monster", "10 KM! Purathottu nokkeda mone, lokam avideyum undu. 💀", 10000.0, false),
+        Achievement("ACH_25KM", "🏆 Touch Grass", "25 KM!!! Phone vechittu purathottu onnu poda. ☠️", 25000.0, false),
+        Achievement("ACH_50KM", "🏆 Thumb Legend", "50 KM... ninte thumbinu ippo retirement venam.", 50000.0, false)
     )
 
     fun calculateXp(distanceMeters: Double): Long {
