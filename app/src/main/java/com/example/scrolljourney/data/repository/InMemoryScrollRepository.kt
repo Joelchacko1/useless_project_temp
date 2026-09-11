@@ -93,7 +93,7 @@ class InMemoryScrollRepository : ScrollEventSink, ScrollStatsRepository {
                     AppDistanceStat(
                         packageName = packageName,
                         distanceMeters = pkgEvents.sumOf { it.distanceMeters },
-                        scrollCount = pkgEvents.size.toLong(),
+                        scrollCount = countScrollGestures(pkgEvents),
                     )
                 }
                 .sortedByDescending { it.distanceMeters }
@@ -103,7 +103,7 @@ class InMemoryScrollRepository : ScrollEventSink, ScrollStatsRepository {
     private fun observeForDateRange(daysBack: Long): Flow<AggregatedStats> {
         return statsFlow.map { allEvents ->
             val today = LocalDate.now()
-            
+
             val filteredEvents = if (daysBack == 0L) {
                 // Today
                 val todayStr = today.format(DateTimeFormatter.ISO_LOCAL_DATE)
@@ -119,30 +119,71 @@ class InMemoryScrollRepository : ScrollEventSink, ScrollStatsRepository {
             }
 
             val totalDistance = filteredEvents.sumOf { it.distanceMeters }
+            // Raw callback count (NOT gesture count) — intentionally used for activeMs below,
+            // since a burst of many callbacks still represents more actual scrolling time.
             val totalCount = filteredEvents.size.toLong()
-            
+            val totalGestureCount = countScrollGestures(filteredEvents)
+
             val topApps = filteredEvents
                 .groupBy { it.packageName }
                 .map { (pkg, evts) ->
                     AppDistanceStat(
                         packageName = pkg,
                         distanceMeters = evts.sumOf { it.distanceMeters },
-                        scrollCount = evts.size.toLong(),
+                        scrollCount = countScrollGestures(evts),
                     )
                 }
                 .sortedByDescending { it.distanceMeters }
 
             // Approximation of active tracking time based on count * average scroll duration (e.g. 50ms)
             // A real implementation might use start/stop events
-            val activeMs = totalCount * 50L 
+            val activeMs = totalCount * 50L
 
             AggregatedStats(
                 dateKey = if (daysBack == 0L) today.format(DateTimeFormatter.ISO_LOCAL_DATE) else "Last ${daysBack} Days",
-                totalScrolls = totalCount,
+                totalScrolls = totalGestureCount,
                 totalDistanceMeters = totalDistance,
                 activeTrackingMs = activeMs,
                 topApps = topApps
             )
         }
+    }
+
+    /**
+     * Counts distinct scroll "gestures" in [events]: a burst of consecutive callbacks from the
+     * same app with no gap longer than [GESTURE_SESSION_GAP_MS] counts as one gesture. Events
+     * are grouped by packageName before counting, since a scroll in app A and a scroll in app B
+     * happening close together in time are always two separate physical gestures.
+     *
+     * This only changes how scrolls are counted for display; distance accumulation is untouched
+     * and keeps summing distanceMeters from every raw callback.
+     */
+    private fun countScrollGestures(events: List<ProcessedScroll>): Long {
+        return events
+            .groupBy { it.packageName }
+            .values
+            .sumOf { pkgEvents ->
+                val sorted = pkgEvents.sortedBy { it.timestampEpochMs }
+                var gestures = 1L
+                for (i in 1 until sorted.size) {
+                    if (sorted[i].timestampEpochMs - sorted[i - 1].timestampEpochMs > GESTURE_SESSION_GAP_MS) {
+                        gestures++
+                    }
+                }
+                gestures
+            }
+    }
+
+    companion object {
+        /**
+         * Max gap (ms) between consecutive callbacks from the same app to be considered part of
+         * one continuous scroll gesture. Android fires TYPE_VIEW_SCROLLED once per frame during
+         * a single swipe, so without this a single gesture is counted as dozens of "scrolls".
+         * Independent from ScrollEventProcessor.DUPLICATE_CALLBACK_WINDOW_MS (250ms), which
+         * suppresses byte-identical duplicate callback metadata at ingestion — a different
+         * problem at a different layer. This only affects display counting, never distance
+         * accumulation.
+         */
+        private const val GESTURE_SESSION_GAP_MS = 500L
     }
 }
