@@ -1,4 +1,4 @@
 <resources>
-    <string name="app_name">ScrollJourney</string>
-    <string name="accessibility_service_description">ScrollJourney measures estimated scroll distance across apps. It does not read screen content, messages, or passwords.</string>
+    <string name="app_name">ThondiEngotta</string>
+    <string name="accessibility_service_description">ThondiEngotta measures estimated scroll distance across apps. It does not read screen content, messages, or passwords.</string>
 </resources>
