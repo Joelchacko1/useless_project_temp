@@ -176,3 +176,52 @@ These events are processed and converted into an estimated physical scrolling di
                          │
                          ▼
                    Malayalam Roast
+```
+
+---
+
+## 🚀 Installation & Running the App
+
+### 📦 Where's the app?
+
+A ready-to-install debug build is committed straight in this repo, no build step required:
+
+> [`release/app-debug.apk`](release/app-debug.apk)
+
+### ✅ Requirements
+
+- An Android phone running **Android 8.0 (API 26) or higher**
+- ~20 MB of free storage
+- Permission to install apps from the source you use to open the APK (Android prompts for this automatically the first time)
+
+### 🔧 Install steps
+
+1. Download [`app-debug.apk`](release/app-debug.apk) onto your phone (via `git clone` + copy, a GitHub download, or transferring the file directly).
+2. Open the downloaded file. Android will ask to allow installs from that source — allow it.
+3. Tap **Install**, then **Open**.
+
+### ⚙️ One-time setup (required before tracking works)
+
+ThondiEngotta measures scrolls happening *inside other apps*, which Android only allows through its Accessibility framework — so two permissions need to be granted manually after install. The app's **Tracking** screen links you straight to both.
+
+1. **Turn on the Accessibility Service**
+   `Settings → Accessibility → Installed apps → ThondiEngotta` → toggle **ON**.
+   Android shows a standard warning about what accessibility services can do — expected. This app only reads numeric scroll data (deltas/positions/indices), never screen text or content — see [How It Works](#-how-it-works) above.
+2. **Allow "Display over other apps"**
+   `Settings → Apps → ThondiEngotta → Display over other apps` → toggle **ON**.
+   This is what lets the roast achievement banner pop up over Instagram/YouTube/whatever you're scrolling, instead of only showing inside the app.
+
+Once both are on, go scroll something — then check the Dashboard to watch your KM count and XP climb.
+
+### 🛠️ Building from source (optional)
+
+Prefer to build it yourself instead of using the prebuilt APK:
+
+```bash
+git clone https://github.com/Joelchacko1/useless_project_temp.git
+cd useless_project_temp
+./gradlew assembleDebug        # macOS/Linux
+gradlew.bat assembleDebug      # Windows
+```
+
+The freshly built APK lands at `app/build/outputs/apk/debug/app-debug.apk`. Easiest path is opening the project folder in **Android Studio** and hitting Run — it handles the JDK/SDK/toolchain setup automatically.
