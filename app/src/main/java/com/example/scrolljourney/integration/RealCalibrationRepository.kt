@@ -1,6 +1,5 @@
 package com.example.scrolljourney.integration
 
-import com.example.scrolljourney.data.repository.PersistentScrollRepository
 import com.example.scrolljourney.domain.distance.CalibrationEngine
 import com.example.scrolljourney.domain.distance.CalibrationProfileStore
 import com.example.scrolljourney.domain.distance.EstimationMethod
@@ -41,20 +40,8 @@ class RealCalibrationRepository(
         _progress.value = IDLE.copy(calibrationId = id)
         runJob = externalScope.launch {
             val samples = mutableListOf<Double>()
-            var lastAcceptedTimestampMs: Long? = null
             processedScrolls
                 .filter { it.estimationMethod == EstimationMethod.ACTUAL_DELTA }
-                .filter { sample ->
-                    // Android fires one callback per frame during a scroll, so without this a
-                    // single fling would fill the whole sample count with correlated readings
-                    // from the same gesture. Only the first callback per distinct gesture counts,
-                    // matching the gap already used to count scroll gestures for display.
-                    val last = lastAcceptedTimestampMs
-                    val isNewGesture = last == null ||
-                        sample.timestampEpochMs - last > PersistentScrollRepository.GESTURE_SESSION_GAP_MS
-                    if (isNewGesture) lastAcceptedTimestampMs = sample.timestampEpochMs
-                    isNewGesture
-                }
                 .take(TARGET_SAMPLE_COUNT)
                 .collect { sample ->
                     samples += sample.distanceMeters

@@ -150,7 +150,7 @@ private fun CalibrationInfoCard(modifier: Modifier = Modifier) {
         )
 
         Text(
-            text = "Calibration helps estimate scroll distance more accurately for scrolls we can't measure directly. Scroll normally in this app or any other, pausing briefly between scrolls — we only count one sample per distinct scroll, so a single fast fling can't skew the result. This takes a bit longer than a couple of seconds, but gives a much steadier baseline.",
+            text = "Calibration helps estimate scroll distance more accurately for scrolls we can't measure directly. Just scroll normally in this app or any other for a few seconds — we'll learn a baseline from the scrolls we can measure precisely.",
             fontSize = 12.sp,
             color = extra.onReward,
             lineHeight = 18.sp

@@ -20,15 +20,10 @@ import java.time.Instant
 
 class RealCalibrationRepositoryTest {
 
-    private fun scroll(
-        estimationMethod: EstimationMethod,
-        distanceMeters: Double,
-        id: String,
-        timestampEpochMs: Long,
-    ): ProcessedScroll =
+    private fun scroll(estimationMethod: EstimationMethod, distanceMeters: Double, id: String): ProcessedScroll =
         ProcessedScroll(
             id = id,
-            timestampEpochMs = timestampEpochMs,
+            timestampEpochMs = Instant.now().toEpochMilli(),
             packageName = "com.android.chrome",
             direction = ScrollDirection.DOWN,
             distanceMeters = distanceMeters,
@@ -63,16 +58,15 @@ class RealCalibrationRepositoryTest {
             repo.observeCalibrationProgress(id).collect { progressUpdates.add(it.sampleCount) }
         }
 
-        val baseTime = Instant.now().toEpochMilli()
         // Interleave non-ACTUAL_DELTA scrolls, which must not count toward the target.
-        processedScrolls.tryEmit(scroll(EstimationMethod.FALLBACK_ESTIMATE, 0.12, "noise-1", baseTime))
+        processedScrolls.tryEmit(scroll(EstimationMethod.FALLBACK_ESTIMATE, 0.12, "noise-1"))
         repeat(19) { i ->
-            processedScrolls.tryEmit(scroll(EstimationMethod.ACTUAL_DELTA, 0.2, "actual-$i", baseTime + i * 600L))
+            processedScrolls.tryEmit(scroll(EstimationMethod.ACTUAL_DELTA, 0.2, "actual-$i"))
         }
-        processedScrolls.tryEmit(scroll(EstimationMethod.CALIBRATED_ESTIMATE, 0.2, "noise-2", baseTime + 19 * 600L))
+        processedScrolls.tryEmit(scroll(EstimationMethod.CALIBRATED_ESTIMATE, 0.2, "noise-2"))
         assertFalse(progressUpdates.contains(20)) // not complete yet — only 19 ACTUAL_DELTA samples so far
 
-        processedScrolls.tryEmit(scroll(EstimationMethod.ACTUAL_DELTA, 0.2, "actual-19", baseTime + 19 * 600L))
+        processedScrolls.tryEmit(scroll(EstimationMethod.ACTUAL_DELTA, 0.2, "actual-19"))
 
         assertEquals(20, progressUpdates.last())
         assertEquals(20, store.savedProfile?.sampleCount)
@@ -96,9 +90,8 @@ class RealCalibrationRepositoryTest {
             repo.observeCalibrationProgress(id).collect { progressUpdates.add(it.isCompleted) }
         }
 
-        val baseTime = Instant.now().toEpochMilli()
         repeat(20) { i ->
-            processedScrolls.tryEmit(scroll(EstimationMethod.ACTUAL_DELTA, 0.2, "actual-$i", baseTime + i * 600L))
+            processedScrolls.tryEmit(scroll(EstimationMethod.ACTUAL_DELTA, 0.2, "actual-$i"))
         }
 
         assertTrue(progressUpdates.last())
@@ -119,60 +112,17 @@ class RealCalibrationRepositoryTest {
         )
 
         repo.startCalibration()
-        val baseTime = Instant.now().toEpochMilli()
         repeat(5) { i ->
-            processedScrolls.tryEmit(scroll(EstimationMethod.ACTUAL_DELTA, 0.2, "actual-$i", baseTime + i * 600L))
+            processedScrolls.tryEmit(scroll(EstimationMethod.ACTUAL_DELTA, 0.2, "actual-$i"))
         }
 
         repo.cancelCalibration()
 
         // Samples that arrive after cancellation must not resurrect the old run.
         repeat(20) { i ->
-            processedScrolls.tryEmit(
-                scroll(EstimationMethod.ACTUAL_DELTA, 0.2, "post-cancel-$i", baseTime + (5 + i) * 600L),
-            )
+            processedScrolls.tryEmit(scroll(EstimationMethod.ACTUAL_DELTA, 0.2, "post-cancel-$i"))
         }
 
         assertNull(store.savedProfile)
-    }
-
-    @Test
-    fun testSamplesFromTheSameGestureBurstCountOnce() = runBlocking {
-        val processedScrolls = MutableSharedFlow<ProcessedScroll>(extraBufferCapacity = 64)
-        val store = FakeCalibrationProfileStore()
-        val repo = RealCalibrationRepository(
-            processedScrolls = processedScrolls,
-            profileStore = store,
-            externalScope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined),
-        )
-
-        val id = repo.startCalibration()
-        val progressUpdates = mutableListOf<Int>()
-        val job = launch(Dispatchers.Unconfined) {
-            repo.observeCalibrationProgress(id).collect { progressUpdates.add(it.sampleCount) }
-        }
-
-        // One continuous fling: 20 callbacks only 10ms apart, spanning 190ms total — well within
-        // the gesture gap, unlike the inter-callback gap alone (the total burst span matters,
-        // not just consecutive-callback spacing, since the gate compares against the last
-        // *accepted* sample).
-        val burstStart = Instant.now().toEpochMilli()
-        repeat(20) { i ->
-            processedScrolls.tryEmit(scroll(EstimationMethod.ACTUAL_DELTA, 0.2, "burst-$i", burstStart + i * 10L))
-        }
-        assertEquals(1, progressUpdates.last())
-        assertNull(store.savedProfile)
-
-        // Properly spaced gestures afterward should still complete the run normally.
-        val secondPhaseStart = burstStart + 20 * 10L + 600L
-        repeat(19) { i ->
-            processedScrolls.tryEmit(
-                scroll(EstimationMethod.ACTUAL_DELTA, 0.2, "spaced-$i", secondPhaseStart + i * 600L),
-            )
-        }
-        assertEquals(20, progressUpdates.last())
-        assertEquals(20, store.savedProfile?.sampleCount)
-
-        job.cancel()
     }
 }
