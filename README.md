@@ -235,3 +235,10 @@ gradlew.bat assembleDebug      # Windows
 ```
 
 The freshly built APK lands at `app/build/outputs/apk/debug/app-debug.apk`. Easiest path is opening the project folder in **Android Studio** and hitting Run — it handles the JDK/SDK/toolchain setup automatically.
+
+## 📸 App Screenshots
+
+| 📱 Home | 🗺️ Journey | 🏆 Achievements |
+| :------: | :--------: | :-------------: |
+| ![Home](screenshots/ss1.jpeg) | ![Journey](screenshots/ss2.jpeg) | ![Achievements](screenshots/ss3.jpeg) |
+| **Home Page** | **Journey & Statistics** | **Achievements & Roast** |
