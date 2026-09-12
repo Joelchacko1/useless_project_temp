@@ -180,6 +180,16 @@ These events are processed and converted into an estimated physical scrolling di
 
 ---
 
+## 🎥 Video
+
+Watch ThondiEngotta roast a thumb in real time:
+
+▶️ **[Demo Video](https://youtube.com/shorts/NtXSLVNw6ug?si=RWz9g8tIvn7AKhsc)**
+
+The video shows scroll tracking running across apps, the distance counter climbing, and an achievement roast unlocking.
+
+---
+
 ## 🚀 Installation & Running the App
 
 ### 📦 Where's the app?
